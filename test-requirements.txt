@@ -1,0 +1,5 @@
+jsonfixer
+truncjson
+pytest
+pytest-cov
+hypothesis
