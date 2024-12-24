@@ -1,7 +1,9 @@
 """
 Untruncates json. Machine translated from untruncate-json by dphilipson
 """
+
 from __future__ import annotations
+
 from enum import Enum
 from typing import Optional
 

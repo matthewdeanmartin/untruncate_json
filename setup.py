@@ -8,7 +8,6 @@ import os.path
 import sys
 from typing import TYPE_CHECKING, Any
 
-
 # we'll import stuff from the source tree, let's ensure is on the sys path
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
@@ -16,9 +15,11 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 # when installing from a wheel file (though it is still needed for
 # alternative forms of installing, as suggested by README.md).
 from setuptools import Extension, find_packages, setup
-# from setuptools.command.build_py import build_py
 
 from untruncate_json.version import __version__ as version
+
+# from setuptools.command.build_py import build_py
+
 
 if TYPE_CHECKING:
     from typing_extensions import TypeGuard
@@ -78,11 +79,14 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development",
     "Typing :: Typed",
 ]
 
 from pathlib import Path
+
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 

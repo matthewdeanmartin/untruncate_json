@@ -31,7 +31,7 @@ clean: clean-pyc clean-test
 # tests are often slow and linting is fast, so run tests on linted code.
 test: clean .build_history/pylint .build_history/bandit poetry.lock
 	@echo "Running unit tests"
-	$(VENV) python -m unittest discover
+	# $(VENV) python -m unittest discover
 	$(VENV) py.test tests --cov=untruncate_json --cov-report=html --cov-fail-under 50
 
 .build_history:

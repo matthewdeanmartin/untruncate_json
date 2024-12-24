@@ -1,6 +1,7 @@
 """
 CLI interface
 """
+
 import sys
 
 from untruncate_json.untrunc import complete

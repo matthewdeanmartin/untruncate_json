@@ -2,9 +2,10 @@ import json
 
 from half_json.core import JSONFixer
 from hypothesis import given, strategies
-from truncjson import truncjson
 
 from untruncate_json import complete
+
+# from truncjson import truncjson
 
 
 def test_array_one():
@@ -40,26 +41,30 @@ def test_untruncate_various(length):
         raise
 
 
-@given(strategies.integers(min_value=10, max_value=len(SAMPLE)))
-def test_truncjson_various(length):
-    try:
-        json.loads(truncjson.complete(SAMPLE[:length]))
-    except json.JSONDecodeError:
-        print("----")
-        print(f"INPUT: {SAMPLE[:length]}")
-        print(f"OUTPUT: {truncjson.complete(SAMPLE[:length])}")
-        raise
+# @given(strategies.integers(min_value=10, max_value=len(SAMPLE)))
+# def test_truncjson_various(length):
+#     try:
+#         json.loads(truncjson.complete(SAMPLE[:length]))
+#     except json.JSONDecodeError:
+#         print("----")
+#         print(f"INPUT: {SAMPLE[:length]}")
+#         print(f"OUTPUT: {truncjson.complete(SAMPLE[:length])}")
+#         raise
 
 
-@given(strategies.integers(min_value=10, max_value=len(SAMPLE)))
-def test_jsonfixer_various(length):
-    try:
-        json.loads(JSONFixer().fix(SAMPLE[:length]).line)
-    except json.JSONDecodeError:
-        print("----")
-        print(f"INPUT: {SAMPLE[:length]}")
-        print(f"OUTPUT: {JSONFixer().fix(SAMPLE[:length]).line}")
-        raise
+# Failing Case:
+# reported: https://github.com/half-pie/half-json/issues/15
+# INPUT: {"name": "John", "age": 30,
+# OUTPUT: {"name": "John", "age": 30,}
+# @given(strategies.integers(min_value=10, max_value=len(SAMPLE)))
+# def test_jsonfixer_various(length):
+#     try:
+#         json.loads(JSONFixer().fix(SAMPLE[:length]).line)
+#     except json.JSONDecodeError:
+#         print("----")
+#         print(f"INPUT: {SAMPLE[:length]}")
+#         print(f"OUTPUT: {JSONFixer().fix(SAMPLE[:length]).line}")
+#         raise
 
 
 def test_string():

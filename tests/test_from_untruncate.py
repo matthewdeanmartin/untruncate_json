@@ -3,6 +3,7 @@ Credit:
 https://github.com/dphilipson/untruncate-json/blob/master/src/index.ts
 License: MIT
 """
+
 import json
 
 import pytest
