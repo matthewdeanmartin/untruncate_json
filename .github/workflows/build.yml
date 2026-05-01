@@ -17,6 +17,8 @@ jobs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
       - name: Install cibuildwheel and pypyp
         run: |
           pipx install cibuildwheel==2.22.0
@@ -54,6 +56,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
       - uses: pypa/cibuildwheel@v2.22.0
         with:
           config-file: cibuildwheel.toml
@@ -71,6 +75,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5.3.0
         name: Install Python
         with:
@@ -97,6 +103,8 @@ jobs:
   #    runs-on: ubuntu-latest
   #    steps:
   #      - uses: actions/checkout@v4
+  with:
+    persist-credentials: false
   #      - uses: actions/setup-python@v4
   #        name: Install Python
   #        with:
