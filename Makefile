@@ -102,3 +102,26 @@ pex:
 
 shiv: untruncate_json.pyz
 	@shiv untruncate_json -o untruncate_json.pyz --python python --console-script untruncate_json
+
+# ── Dogfooding targets (independent, not wired into check) ───────────────────
+
+.PHONY: version-check
+version-check:
+	@uv run jiggle_version check
+
+.PHONY: dev-status
+dev-status:
+	@uv run troml-dev-status validate .
+
+.PHONY: prerelease-check
+prerelease-check: version-check dev-status
+	@echo "Pre-release checks passed."
+
+.PHONY: dont-be-lazy
+dont-be-lazy:
+	@uv run dont_be_lazy --root . --no-color summary
+	@uv run dont_be_lazy --root . --no-color scan untruncate_json --no-config-suppressions || true
+
+.PHONY: pydoc-docs
+pydoc-docs:
+	@uv run pydoc_fork untruncate_json -o ./pydoc/
