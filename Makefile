@@ -3,16 +3,11 @@
 
 FILES := $(wildcard **/*.py)
 
-# if you wrap everything in poetry run, it runs slower.
-ifeq ($(origin VIRTUAL_ENV),undefined)
-    VENV := poetry run
-else
-    VENV :=
-endif
+VENV := uv run
 
-poetry.lock: pyproject.toml
+uv.lock: pyproject.toml
 	@echo "Installing dependencies"
-	@poetry install --with dev
+	@uv sync
 
 clean-pyc:
 	@echo "Removing compiled files"
@@ -29,7 +24,7 @@ clean: clean-pyc clean-test
 
 # tests can't be expected to pass if dependencies aren't installed.
 # tests are often slow and linting is fast, so run tests on linted code.
-test: clean .build_history/pylint .build_history/bandit poetry.lock
+test: clean .build_history/pylint .build_history/bandit uv.lock
 	@echo "Running unit tests"
 	# $(VENV) python -m unittest discover
 	$(VENV) py.test tests --cov=untruncate_json --cov-report=html --cov-fail-under 50

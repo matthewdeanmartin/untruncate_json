@@ -61,6 +61,10 @@ dev = [
     "troml-dev-status>=0.6.0; python_version >= '3.9'",
     "dont-be-lazy>=0.1.2; python_version >= '3.10'",
     "pydoc-fork>=3.0.0; python_version >= '3.10'",
+    "isort>=5.13.2",
+    "black>=24.0.0",
+    "bandit>=1.7.0",
+    "pylint>=3.0.0",
 ]
 
 [tool.uv]
