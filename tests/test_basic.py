@@ -1,6 +1,5 @@
 import json
 
-from half_json.core import JSONFixer
 from hypothesis import given, strategies
 
 from untruncate_json import complete

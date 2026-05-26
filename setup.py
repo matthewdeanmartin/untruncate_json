@@ -24,6 +24,7 @@ from untruncate_json.version import __version__ as version
 if TYPE_CHECKING:
     from typing_extensions import TypeGuard
 
+
 def is_list_of_setuptools_extension(items: list[Any]) -> TypeGuard[list[Extension]]:
     return all(isinstance(item, Extension) for item in items)
 

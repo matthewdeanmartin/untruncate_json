@@ -157,7 +157,7 @@ exclude = [
     "venv",
     "hide"
 ]
-per-file-ignores = { }
+per-file-ignores = { "setup.py" = ["E402"] }
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"

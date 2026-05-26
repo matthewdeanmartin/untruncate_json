@@ -38,7 +38,7 @@ class RespawnReason(Enum):
 
 def is_whitespace(char: str) -> bool:
     """Returns true if the character is whitespace."""
-    return char in "\u0020\u000D\u000A\u0009"
+    return char in "\u0020\u000d\u000a\u0009"
 
 
 def complete(json_str: str) -> str:

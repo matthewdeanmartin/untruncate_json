@@ -18,18 +18,23 @@ SAMPLE = json.dumps(
     }
 )
 
+
 def speed_untruncate_json():
     for i in range(len(SAMPLE)):
         untruncate_json.complete(SAMPLE[:i])
+
 
 # def speed_truncjson():
 #     for i in range(len(SAMPLE)):
 #         truncjson.complete(SAMPLE[:i])
 
 SINGLETON = JSONFixer()
+
+
 def speed_jsonfixer():
     for i in range(len(SAMPLE)):
         SINGLETON.fix(SAMPLE[:i])
+
 
 time_jsonfixer = timeit.timeit(speed_jsonfixer, number=1000)
 print(f"jsonfixer: {time_jsonfixer}")
