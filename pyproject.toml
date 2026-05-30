@@ -27,7 +27,7 @@ Repository = "https://github.com/matthewdeanmartin/untruncate_json"
 Homepage = "https://github.com/matthewdeanmartin/untruncate_json"
 Documentation = "https://github.com/matthewdeanmartin/untruncate_json"
 "Bug Tracker" = "https://github.com/matthewdeanmartin/untruncate_json/issues"
-"Change Log" = "https://github.com/matthewdeanmartin/untruncate_json/blob/main/CHANGES.md"
+"Change Log" = "https://github.com/matthewdeanmartin/untruncate_json/blob/main/CHANGELOG.md"
 
 [project.scripts]
 dedlin = "untruncate_json.__main__:main"

@@ -38,4 +38,9 @@ want to translate the long switch blocks. Copilot translated the switch blocks.
 - untruncate_json: 1.14 (if you run `mypyc untruncate_json`
 - jsonfixer: 23.06
 
+## Project Links
 
+- [GitHub](https://github.com/matthewdeanmartin/untruncate_json)
+- [PyPI](https://pypi.org/project/untruncate-json/)
+- [Bug Tracker](https://github.com/matthewdeanmartin/untruncate_json/issues)
+- [Change Log](https://github.com/matthewdeanmartin/untruncate_json/blob/main/CHANGELOG.md)
