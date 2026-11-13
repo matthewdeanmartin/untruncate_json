@@ -1,6 +1,8 @@
 ---
 name: Create Draft Release
-concurrency: changelog
+concurrency:
+  group: changelog
+  cancel-in-progress: false
 on:
   push:
     branches: [main]
@@ -9,24 +11,26 @@ permissions:
   contents: read
 jobs:
   release:
+    name: Refresh draft release
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Create the release branch or update the draft release.
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Setup Python 3.9
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
-        with: {python-version: '3.9'}
+      - name: Setup Python 3.15
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: {python-version: '3.15'}
       - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
       - name: Sync dependencies
-        run: uv sync --frozen --group dev
+        run: uv sync --frozen --only-group release
       - name: Creating Draft release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: uv run kaclm github-release --repository ${{ github.repository }}
+          REPOSITORY: ${{ github.repository }}
+        run: uv run --frozen --only-group release kaclm github-release --repository "$REPOSITORY"

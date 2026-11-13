@@ -1,0 +1,6 @@
+include cibuildwheel.toml
+include tests/check_native.py
+include CHANGELOG.md
+include mkdocs.yml
+include .readthedocs.yaml
+recursive-include docs *.md *.txt

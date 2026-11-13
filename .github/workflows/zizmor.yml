@@ -1,0 +1,37 @@
+name: GitHub Actions security
+on:
+  push:
+    branches: [main]
+    paths: ['.github/**']
+  pull_request:
+    paths: ['.github/**']
+permissions:
+  contents: read
+concurrency:
+  group: zizmor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  audit:
+    name: Audit workflows with zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # Upload findings to GitHub code scanning.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: '3.15'
+          enable-cache: false
+      - name: Run zizmor
+        run: uv run --frozen --only-group security zizmor --persona pedantic --no-ignores --strict-collection --format sarif .github/workflows > results.sarif
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Upload findings
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          sarif_file: results.sarif
+          category: zizmor

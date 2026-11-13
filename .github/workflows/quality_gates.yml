@@ -1,0 +1,31 @@
+name: Quality gates
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ''
+concurrency:
+  group: quality_gates-${{ github.run_id }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  check:
+    name: Run quality gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: '3.15'
+      - run: uv sync --frozen --only-group quality --only-group release
+      - run: make check
+      - run: make validate
+      - run: make docs

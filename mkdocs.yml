@@ -1,0 +1,17 @@
+site_name: untruncate_json
+site_url: https://untruncate-json.readthedocs.io/en/latest/
+site_description: Repair truncated JSON in Python.
+repo_url: https://github.com/matthewdeanmartin/untruncate_json
+repo_name: matthewdeanmartin/untruncate_json
+theme:
+  name: material
+  features:
+    - content.code.copy
+markdown_extensions:
+  - tables
+  - fenced_code
+nav:
+  - Home: index.md
+  - Usage and API: usage.md
+  - Development: development.md
+  - Releases: releases.md

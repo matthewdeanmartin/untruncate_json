@@ -162,3 +162,10 @@ cython_debug/
 .idea/
 
 .build_history/
+
+/site/
+
+/landing/public/
+/landing/resources/
+/landing/.hugo_build.lock
+/results.sarif

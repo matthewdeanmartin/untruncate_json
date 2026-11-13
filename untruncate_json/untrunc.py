@@ -123,7 +123,7 @@ def complete(json_str: str) -> str:
                 push(ContextType.STRING_ESCAPED)
         elif current_context == ContextType.STRING_ESCAPED:
             if char == "u":
-                push(ContextType.STRING_UNICODE)
+                replace(ContextType.STRING_UNICODE)
             else:
                 clear_respawn(RespawnReason.STRING_ESCAPE)
                 pop()

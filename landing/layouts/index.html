@@ -1,0 +1,21 @@
+{{ define "main" }}{{ $p := .Site.Params }}
+<header class="wrap nav"><a class="brand" href="{{ .Site.BaseURL }}"><span aria-hidden="true">{ }</span> untruncate_json</a><nav aria-label="Main"><a href="#examples">Examples</a><a href="{{ $p.docs }}">Docs ↗</a><a href="{{ $p.github }}">GitHub ↗</a></nav></header>
+<main id="main">
+<section class="wrap hero">
+<div><p class="eyebrow">A SMALL PYTHON LIBRARY FOR UNFINISHED DATA</p><h1>The response stopped.<br><em>Your JSON doesn’t<br>have to.</em></h1><p class="lead">Close the brackets. Finish the string. Turn a truncated JSON document into something you can parse—with one function.</p><div class="actions"><a class="button" href="{{ $p.docs }}usage/">Get started <span aria-hidden="true">↗</span></a><a class="text-link" href="{{ $p.pypi }}">View on PyPI →</a></div><div class="install"><span aria-hidden="true">$</span><code>pip install untruncate_json</code></div><p class="small">Python 3.9–3.15 · MIT licensed · No runtime dependencies</p></div>
+<div class="example"><div class="window-title"><span class="dots" aria-hidden="true">● ● ●</span> an interrupted response</div><div class="code-block"><p class="label">01 / RECEIVED</p><pre><code>{"items": [1, 2,</code></pre><p class="cut">Connection ended. Document unfinished.</p></div><div class="transform"><span aria-hidden="true">↓</span> complete(partial)</div><div class="code-block result"><p class="label">02 / REPAIRED</p><pre><code>{"items": [1, 2<span class="added">]}</span></code></pre><p class="success">Ready for json.loads()</p></div></div>
+</section>
+<div class="strip"><div class="wrap strip-inner"><span>One function.</span><span>Typed Python API.</span><span>Native mypyc wheels.</span><span>Linux · macOS · Windows.</span></div></div>
+<section class="wrap usage" id="examples"><div><p class="eyebrow">SMALL API, USEFUL REPAIRS</p><h2>From almost JSON<br>to a Python value.</h2><p>Pass in a complete document or a prefix of one. Get a string back. Use Python’s standard JSON parser for the next step.</p><a class="text-link" href="{{ $p.docs }}usage/">Explore the API →</a></div><div class="python"><div class="window-title">repair.py</div><pre><code><span class="kw">import</span> json
+<span class="kw">from</span> untruncate_json <span class="kw">import</span> complete
+
+partial = <span class="str">'{"items": [1, 2,'</span>
+repaired = complete(partial)
+
+<span class="comment"># {"items": [1, 2]}</span>
+data = json.loads(repaired)</code></pre></div></section>
+<section class="wrap repairs"><h2>Pick up where the document left off.</h2><div class="table-scroll"><table><thead><tr><th scope="col">What got cut off</th><th scope="col">Input</th><th scope="col">Repaired output</th></tr></thead><tbody><tr><th scope="row">A string</th><td><code>"Hello, wor</code></td><td><code>"Hello, wor"</code></td></tr><tr><th scope="row">A literal</th><td><code>[true, fa</code></td><td><code>[true, false]</code></td></tr><tr><th scope="row">A number</th><td><code>123.</code></td><td><code>123.0</code></td></tr><tr><th scope="row">An object value</th><td><code>{"a": 1, "b":</code></td><td><code>{"a": 1}</code></td></tr></tbody></table></div></section>
+<section class="wrap scope"><div><p class="eyebrow">KNOW WHAT YOU’RE GETTING</p><h2>Repair the structure.<br>Review the meaning.</h2></div><div><p>Untruncate repairs a document that ends too soon. It cannot recover missing values or fix every kind of malformed JSON. Unfinished keys, trailing commas, and incomplete string escapes may be discarded.</p><p>Valid, complete JSON stays unchanged. Empty input stays empty. Always validate repaired data before relying on it.</p><a class="text-link" href="{{ $p.docs }}usage/">Read the behavior and limits →</a></div></section>
+<section class="wrap cli"><div><h2>Works in your pipeline, too.</h2><p>Read from stdin. Write the repaired JSON to stdout.</p></div><pre><code>python -m untruncate_json &lt; partial.json</code></pre></section>
+</main><footer class="wrap"><p><strong>untruncate_json</strong><br>MIT licensed. Translated from <a href="https://github.com/dphilipson/untruncate-json">dphilipson/untruncate-json</a>.</p><nav aria-label="Footer"><a href="{{ $p.docs }}">Documentation</a><a href="{{ $p.github }}/blob/main/CHANGELOG.md">Changelog</a><a href="{{ $p.github }}/issues">Report an issue</a></nav></footer>
+{{ end }}

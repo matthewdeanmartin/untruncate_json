@@ -1,122 +1,95 @@
-# isort . && black . && bandit -r . && pylint && pre-commit run --all-files
-# Get changed files
+.DEFAULT_GOAL := help
+VENV := uv run --frozen --only-group quality
+DEV := uv run --frozen
 
-FILES := $(wildcard **/*.py)
+.PHONY: homepage homepage-serve zizmor docs docs-serve validate help sync test ruff pylint mypy bandit check build clean isort black pre-commit version-check dev-status prerelease-check dont-be-lazy pydoc-docs
 
-VENV := uv run
+help:
+	@echo "Available jobs:"
+	@echo "  sync              Install locked quality dependencies"
+	@echo "  check             Run Ruff, Pylint, mypy, Bandit and tests"
+	@echo "  test              Run tests with branch coverage"
+	@echo "  ruff / pylint     Run lint checks"
+	@echo "  mypy              Run strict package type checks"
+	@echo "  zizmor            Audit GitHub Actions security"
+	@echo "  bandit            Run security checks"
+	@echo "  homepage / homepage-serve Build / preview the Hugo homepage"
+	@echo "  docs / docs-serve Build / preview documentation"
+	@echo "  build             Build native wheel and source distribution"
+	@echo "  clean             Remove build and test artifacts"
+	@echo "  isort / black     Format imports / Python code"
+	@echo "  pre-commit        Run pre-commit hooks"
+	@echo "  validate          Validate the changelog"
+	@echo "  version-check     Check version consistency"
+	@echo "  dev-status        Validate development status"
+	@echo "  prerelease-check  Run quality and release metadata checks"
+	@echo "  dont-be-lazy      Scan for unfinished work"
+	@echo "  pydoc-docs        Generate API documentation"
 
-uv.lock: pyproject.toml
-	@echo "Installing dependencies"
-	@uv sync
+sync:
+	uv sync --frozen --no-install-project --only-group quality
 
-clean-pyc:
-	@echo "Removing compiled files"
-	@find untruncate_json -name '*.pyc' -exec rm -f {} + || true
-	@find untruncate_json -name '*.pyo' -exec rm -f {} + || true
-	@find untruncate_json -name '__pycache__' -exec rm -fr {} + || true
+test:
+	$(VENV) python -m pytest tests --cov=untruncate_json --cov-branch --cov-report=term-missing --cov-fail-under=90
 
-clean-test:
-	@echo "Removing coverage data"
-	@rm -f .coverage || true
-	@rm -f .coverage.* || true
+ruff:
+	$(VENV) ruff check .
 
-clean: clean-pyc clean-test
+pylint:
+	$(VENV) pylint untruncate_json --fail-under=9.7
 
-# tests can't be expected to pass if dependencies aren't installed.
-# tests are often slow and linting is fast, so run tests on linted code.
-test: clean .build_history/pylint .build_history/bandit uv.lock
-	@echo "Running unit tests"
-	# $(VENV) python -m unittest discover
-	$(VENV) py.test tests --cov=untruncate_json --cov-report=html --cov-fail-under 50
+mypy:
+	$(VENV) mypy untruncate_json
 
-.build_history:
-	@mkdir -p .build_history
+bandit:
+	$(VENV) bandit -r untruncate_json
 
-.build_history/isort: .build_history $(FILES)
-	@echo "Formatting imports"
-	$(VENV) isort .
-	@touch .build_history/isort
+check: ruff pylint mypy bandit test
 
-.PHONY: isort
-isort: .build_history/isort
+build:
+	uv build
 
-.build_history/black: .build_history .build_history/isort $(FILES)
-	@echo "Formatting code"
-	$(VENV) black untruncate_json --exclude .venv
-	$(VENV) black tests --exclude .venv
-	# $(VENV) black scripts --exclude .venv
-	@touch .build_history/black
+clean:
+	$(VENV) python -c "from pathlib import Path; import shutil; [shutil.rmtree(p) for p in (Path('build'), Path('dist'), Path('htmlcov'), Path('.pytest_cache'), Path('.mypy_cache'), Path('.ruff_cache')) if p.exists()]; [p.unlink() for p in Path('.').glob('.coverage*') if p.is_file()]; [shutil.rmtree(p) for root in ('untruncate_json', 'tests') for p in Path(root).rglob('__pycache__')]"
 
-.PHONY: black
-black: .build_history/black
+isort:
+	$(DEV) isort untruncate_json tests
 
-.build_history/pre-commit: .build_history .build_history/isort .build_history/black
-	@echo "Pre-commit checks"
-	$(VENV) pre-commit run --all-files
-	@touch .build_history/pre-commit
+black:
+	$(DEV) black untruncate_json tests
 
-.PHONY: pre-commit
-pre-commit: .build_history/pre-commit
+pre-commit:
+	$(DEV) pre-commit run --all-files
 
-.build_history/bandit: .build_history $(FILES)
-	@echo "Security checks"
-	$(VENV)  bandit untruncate_json
-	@touch .build_history/bandit
-
-.PHONY: bandit
-bandit: .build_history/bandit
-
-.PHONY: pylint
-.build_history/pylint: .build_history .build_history/isort .build_history/black $(FILES)
-	@echo "Linting with pylint"
-	$(VENV) pylint untruncate_json --fail-under 9.7
-	@touch .build_history/pylint
-
-# for when using -j (jobs, run in parallel)
-.NOTPARALLEL: .build_history/isort .build_history/black
-
-check: test pylint bandit
-
-.PHONY: publish
-publish_test:
-	rm -rf dist && poetry version minor && poetry build && twine upload -r testpypi dist/*
-
-.PHONY: publish
-publish: test
-	rm -rf dist && poetry build
-
-.PHONY:
-docker:
-	docker build -t untruncate_json -f Dockerfile .
-
-.PHONY:
-pex:
-	# linux only
-	@poetry export -f requirements.txt --output requirements.txt
-	@pex -r "requirements.txt" -e "untruncate_json.cli:main" -o "untruncate_json.pex"
-
-shiv: untruncate_json.pyz
-	@shiv untruncate_json -o untruncate_json.pyz --python python --console-script untruncate_json
-
-# ── Dogfooding targets (independent, not wired into check) ───────────────────
-
-.PHONY: version-check
 version-check:
-	@uv run jiggle_version check
+	$(DEV) jiggle_version check
 
-.PHONY: dev-status
 dev-status:
-	@uv run troml-dev-status validate .
+	$(DEV) troml-dev-status validate .
 
-.PHONY: prerelease-check
-prerelease-check: version-check dev-status
-	@echo "Pre-release checks passed."
+prerelease-check: check version-check dev-status
 
-.PHONY: dont-be-lazy
 dont-be-lazy:
-	@uv run dont_be_lazy --root . --no-color summary
-	@uv run dont_be_lazy --root . --no-color scan untruncate_json --no-config-suppressions || true
+	$(DEV) dont_be_lazy --root . --no-color summary
+	$(DEV) dont_be_lazy --root . --no-color scan untruncate_json --no-config-suppressions
 
-.PHONY: pydoc-docs
 pydoc-docs:
-	@uv run pydoc_fork untruncate_json -o ./pydoc/
+	$(DEV) pydoc_fork untruncate_json -o ./pydoc/
+
+validate:
+	uv run --frozen --only-group release kaclm validate
+
+docs:
+	uv run --frozen --only-group docs mkdocs build --strict
+
+docs-serve:
+	uv run --frozen --only-group docs mkdocs serve
+
+zizmor:
+	uv run --frozen --only-group security zizmor --persona pedantic --no-ignores --strict-collection .github/workflows
+
+homepage:
+	hugo --source landing --minify --gc --panicOnWarning
+
+homepage-serve:
+	hugo server --source landing

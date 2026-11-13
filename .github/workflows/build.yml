@@ -1,190 +1,96 @@
-name: Build wheels
-
-on: [ push, pull_request, workflow_dispatch ]
-
+# Keep this filename: PyPI trusted publishing is registered to build.yml.
+---
+name: Release
+concurrency:
+  group: changelog
+  cancel-in-progress: false
+on:
+  release:
+    types: [published]
 permissions:
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
-  generate_wheels_matrix:
-    name: Generate wheels matrix
+  bump:
+    name: Prepare release branch
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Create the release branch or update the draft release.
+      pull-requests: write # Open the version bump PR.
     outputs:
-      include: ${{ steps.set-matrix.outputs.include }}
+      branch: ${{ steps.release.outputs.branch }}
+      version: ${{ steps.release.outputs.version }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.release.target_commitish }}
+          fetch-depth: 0
           persist-credentials: false
-      - name: Install cibuildwheel and pypyp
+      - name: Set up Python 3.15
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: {python-version: '3.15'}
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+      - name: Sync dependencies
+        run: uv sync --frozen --only-group release
+      - name: Configure git author
         run: |
-          pipx install cibuildwheel==2.22.0
-          pipx install pypyp==1.2.0
-          pipx install "mypy==1.14.0"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - id: set-matrix
-
-
-        run: |
-          MATRIX=$(
-            {
-              cibuildwheel --config-file=cibuildwheel.toml --print-build-identifiers --platform linux . \
-              | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
-              && cibuildwheel --config-file=cibuildwheel.toml --print-build-identifiers --platform macos . \
-              | pyp 'json.dumps({"only": x, "os": "macos-latest"})' \
-              && cibuildwheel --config-file=cibuildwheel.toml --print-build-identifiers --platform windows . \
-              | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
-            } | pyp 'json.dumps(list(map(json.loads, lines)))'
-          )
-          echo "include=$MATRIX" | tee -a $GITHUB_OUTPUT
+      - name: Bump, commit, push branch and open PR
+        id: release
         env:
-          CIBW_ARCHS_LINUX: x86_64
-          CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_ARCHS_WINDOWS: AMD64
-
-  build_wheels:
-    name: Build ${{ matrix.only }}
-    needs: generate_wheels_matrix
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
-        with:
-          config-file: cibuildwheel.toml
-          package-dir: .
-          only: ${{ matrix.only }}
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dist-${{ matrix.only }}
-          path: ./wheelhouse/*.whl
-          overwrite: true
-
-  build_sdist_python_wheel:
-    name: sdist and python wheel
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        name: Install Python
-        with:
-          python-version: "3.9"
-      #      - name: Run check-manifest
-      #        run: |
-      #          pip install check-manifest
-      #          check-manifest -v
-      - name: Build sdist and wheel
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ github.event.release.tag_name }}
+          RELEASE_ID: ${{ github.event.release.id }}
+          BASE_BRANCH: ${{ github.event.release.target_commitish }}
+          REPO: ${{ github.repository }}
         run: |
-          python -m pip install --upgrade setuptools build "mypy==1.14.0"
-          python -m build
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          # One command does everything the bump job used to do in shell:
+          # bump changelog + version files, branch, [skip ci] commit,
+          # --force-with-lease push, and open the release PR. The [skip ci]
+          # decision follows [defaults].skip_ci (default true).
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
+          VERSION="${RELEASE_VERSION#v}"
+          uv run --frozen --only-group release kaclm release-bump \
+            --version "$VERSION" \
+            --base "$BASE_BRANCH" \
+            --release-id "$RELEASE_ID" \
+            --repository "$REPO" \
+            --open-pr \
+            --title "chore: release ${VERSION}" \
+            --body "Automated release PR for ${VERSION}. Merge once the PyPI publish succeeds." \
+            --github-output --yes
+  quality:
+    needs: bump
+    uses: $/.github/workflows/quality_gates.yml
+    with:
+      ref: ${{ needs.bump.outputs.branch }}
+  build:
+    needs: [bump, quality]
+    uses: $/.github/workflows/build_wheels.yml
+    with:
+      ref: ${{ needs.bump.outputs.branch }}
+      version: ${{ needs.bump.outputs.version }}
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write # Request the OIDC token for PyPI trusted publishing.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/untruncate-json
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: dist
-          # dist/*.whl... dist/*.whl
-          # Binary wheel 'untruncate_json-1.1.0-cp39-cp39-linux_x86_64.whl' has an
-          #         unsupported platform tag 'linux_x86_64'.
-          path: |
-            dist/*.tar.gz
-  # uh... translate js code to python just to translate it back?!
-  #  build_wasm_wheel:
-  #    name: WASM wheel for 3.10
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-  #        with:
-  #          persist-credentials: false
-  #      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-  #        name: Install Python
-  #        with:
-  #          python-version: "3.10"
-  #      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-  #        with:
-  #          node-version: 18.5.0 # pyodide tests with this version
-  #      - name: Install emscripten
-  #        id: install_emsdk
-  #        run: |
-  #          git clone https://github.com/emscripten-core/emsdk.git
-  #          cd emsdk
-  #          # Version of Emscripten pyodide 0.21.0 uses.
-  #          ./emsdk install 3.1.14
-  #          ./emsdk activate 3.1.14
-  #          # We need the location of emscripten when we use pyodide-build
-  #          echo "EMSCRIPTEN_DIR=$(pwd)" >> $GITHUB_OUTPUT
-  #      - name: Install pyodide-build
-  #        run: |
-  #          python -m pip install "pyodide-build==0.21.0"
-  #      - name: Build wasm wheels
-  #        env:
-  #          MYPY_USE_MYPYC: "1"
-  #          MYPYC_OPT_LEVEL: "3"
-  #          EMSCRIPTEN_DIR: ${{ steps.install_emsdk.outputs.EMSCRIPTEN_DIR }}
-  #        run: |
-  #          source $EMSCRIPTEN_DIR/emsdk_env.sh
-  #          pyodide build --exports pyinit
-  #      - name: Install pyodide for WASM test
-  #        run: |
-  #          npm install pyodide@0.21.3
-  #      - name: Run WASM smoke test
-  #        run: |
-  #          node wasm_test.js
-  #      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-  #        with:
-  #          name: dist
-  #          path: |
-  #            dist/*.whl
-
-  # don't care about releases right now.
-  #  release:
-  #    name: create release
-  #    needs: [build_wheels, build_sdist_python_wheel]
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - name: Download artifact
-  #        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-  #        with:
-  #          name: dist
-  #          path: dist
-  #      - name: Release
-  #        if: ${{ github.event_name != 'pull_request' }}
-  #        # https://github.com/actions/upload-release-asset/issues/47
-  #        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-  #        with:
-  #          github-token: ${{secrets.GITHUB_TOKEN}}
-  #          script: |
-  #            const fs = require('fs').promises;
-  #            const { repo: { owner, repo }, sha } = context;
-  #
-  #            console.log('environment', process.versions);
-  #            console.log({ owner, repo, sha });
-  #
-  #            const release = await github.rest.repos.createRelease({
-  #              owner, repo,
-  #              // if GITHUB_REF just appears to be a branch, use tag-{commit} as the tag
-  #              tag_name: process.env.GITHUB_REF.includes("refs/heads/") ? "tag-" + sha : process.env.GITHUB_REF.split("/").pop(),
-  #              target_commitish: sha
-  #            });
-  #
-  #            console.log('created release', { release });
-  #
-  #            for (let file of await fs.readdir('dist')) {
-  #              console.log('uploading', file);
-  #
-  #              await github.rest.repos.uploadReleaseAsset({
-  #                owner, repo,
-  #                release_id: release.data.id,
-  #                name: file,
-  #                data: await fs.readFile(`./dist/${file}`)
-  #              });
-  #            }
+          pattern: dist-*
+          merge-multiple: true
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          verbose: 'true'

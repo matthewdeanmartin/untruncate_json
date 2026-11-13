@@ -1,0 +1,10 @@
+baseURL = "https://matthewdeanmartin.github.io/untruncate_json/"
+locale = "en-us"
+title = "untruncate_json"
+disableKinds = ["taxonomy", "term", "RSS"]
+[params]
+  description = "Turn truncated JSON into a complete document with one Python function."
+  docs = "https://untruncate-json.readthedocs.io/en/latest/"
+  github = "https://github.com/matthewdeanmartin/untruncate_json"
+  pypi = "https://pypi.org/project/untruncate-json/"
+
