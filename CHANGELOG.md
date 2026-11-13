@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-13
 ### Changed
 - Restore mypyc native builds for CPython 3.9–3.15.
 - Build and test Linux x64/ARM64, macOS Intel/Apple Silicon, and Windows x64 wheels together before release publication.
@@ -39,6 +39,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Translate core algorithm from the original TypeScript implementation by dphilipson
 - Add unit tests
 
-[Unreleased]: https://github.com/matthewdeanmartin/untruncate_json/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/matthewdeanmartin/untruncate_json/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/matthewdeanmartin/untruncate_json/releases/tag/v1.0.0
