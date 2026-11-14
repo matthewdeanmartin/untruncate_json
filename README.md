@@ -59,7 +59,6 @@ Run `uv build --python 3.15` to build an sdist and native wheel locally
 (a C compiler is required). CI tests installed wheels and checks that the
 compiled parser is loaded. The release workflow calls the same wheel workflow
 and publishes the complete artifact set only after every build and test passes.
-The release bump supplies the version; do not publish the existing 1.1.0 again.
 
 ## Quality checks
 
